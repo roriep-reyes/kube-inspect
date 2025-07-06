@@ -1,13 +1,19 @@
 /*
-Copyright © 2025 NAME HERE <EMAIL ADDRESS>
-
+Copyright © 2025 RORIE REYES <roriep.reyes@gmail.com>
 */
 package cmd
 
 import (
+	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 // podsCmd represents the pods command
@@ -21,7 +27,31 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("pods called")
+		config, err := rest.InClusterConfig()
+		if err != nil {
+			config, err = clientcmd.BuildConfigFromFlags("", filepath.Join(os.Getenv("HOME"), ".kube", "config"))
+			if err != nil {
+				fmt.Printf("Error creating config: %v\n", err)
+				os.Exit(1)
+			}
+		}
+
+		clientset, err := kubernetes.NewForConfig(config)
+		if err != nil {
+			fmt.Printf("Error creating clientset: %v\n", err)
+			os.Exit(1)
+		}
+
+		pods, err := clientset.CoreV1().Pods("").List(context.TODO(), metav1.ListOptions{})
+		if err != nil {
+			fmt.Printf("Error listing pods: %v\n", err)
+			os.Exit(1)
+		}
+
+		fmt.Printf("Found %d pods:\n", len(pods.Items))
+		for _, pod := range pods.Items {
+			fmt.Printf("- %s (%s)\n", pod.Name, pod.Status.Phase)
+		}
 	},
 }
 
