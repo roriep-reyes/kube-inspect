@@ -16,6 +16,8 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
+var namespace string
+
 // podsCmd represents the pods command
 var podsCmd = &cobra.Command{
 	Use:   "pods",
@@ -42,7 +44,7 @@ to quickly create a Cobra application.`,
 			os.Exit(1)
 		}
 
-		pods, err := clientset.CoreV1().Pods("").List(context.TODO(), metav1.ListOptions{})
+		pods, err := clientset.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{})
 		if err != nil {
 			fmt.Printf("Error listing pods: %v\n", err)
 			os.Exit(1)
@@ -57,6 +59,8 @@ to quickly create a Cobra application.`,
 
 func init() {
 	rootCmd.AddCommand(podsCmd)
+
+	podsCmd.Flags().StringVarP(&namespace, "namespace", "n", "", "Namespace to list pods from (default is all namespaces)")
 
 	// Here you will define your flags and configuration settings.
 
