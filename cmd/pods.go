@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"text/tabwriter"
+	"time"
 
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -50,10 +52,15 @@ to quickly create a Cobra application.`,
 			os.Exit(1)
 		}
 
-		fmt.Printf("Found %d pods:\n", len(pods.Items))
+		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+		fmt.Fprint(w, "NAME\tSTATUS\tAGE")
+
 		for _, pod := range pods.Items {
-			fmt.Printf("- %s (%s)\n", pod.Name, pod.Status.Phase)
+			age := metav1.Now().Sub(pod.CreationTimestamp.Time).Round(time.Second)
+			fmt.Fprintf(w, "%s\t%s\t%s\n", pod.Name, pod.Status.Phase, age)
 		}
+
+		w.Flush()
 	},
 }
 
